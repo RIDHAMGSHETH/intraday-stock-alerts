@@ -2,14 +2,16 @@ name: Intraday Stock Scanner
 
 on:
   schedule:
-    # 03:40 UTC = 09:10 AM IST (Monday to Friday)
-    - cron: '40 3 * * 1-5'
+    # 03:35 UTC = 09:05 AM IST (Monday to Friday)
+    - cron: '35 3 * * 1-5'
+    # 06:55 UTC = 12:25 PM IST (Afternoon Relay, Monday to Friday)
+    - cron: '55 6 * * 1-5'
   workflow_dispatch:
 
 jobs:
   run-scanner:
     runs-on: ubuntu-latest
-    timeout-minutes: 370
+    timeout-minutes: 360
 
     steps:
       - name: Checkout Code
@@ -19,12 +21,13 @@ jobs:
         uses: setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
 
-      - name: Run Market Scanner
+      - name: Run Market Scanner Engine
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
