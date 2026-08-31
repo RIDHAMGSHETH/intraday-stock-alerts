@@ -31,5 +31,10 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          KOTAK_CONSUMER_KEY: ${{ secrets.KOTAK_CONSUMER_KEY }}
+          KOTAK_MOBILE_NUMBER: ${{ secrets.KOTAK_MOBILE_NUMBER }}
+          KOTAK_UCC: ${{ secrets.KOTAK_UCC }}
+          KOTAK_MPIN: ${{ secrets.KOTAK_MPIN }}
+          KOTAK_TOTP_SECRET: ${{ secrets.KOTAK_TOTP_SECRET }}
         run: |
           python scanner.py

@@ -15,6 +15,16 @@ if sys.stdout.encoding != 'utf-8':
     except Exception:
         pass
 
+# Import Kotak Neo Integration
+try:
+    from kotak_neo_session import KotakNeoManager
+    kotak_manager = KotakNeoManager()
+    kotak_active = kotak_manager.authenticate()
+except Exception as e:
+    kotak_manager = None
+    kotak_active = False
+    print(f"[Kotak Neo API] Fallback to primary live feed ({e})")
+
 # ==========================================
 # 1. CONFIGURATION & STRATEGY CONSTANTS
 # ==========================================
@@ -76,7 +86,6 @@ def calculate_vwap(df_today: pd.DataFrame) -> pd.Series:
     tp_vol = typical_price * df_today['Volume']
     cum_tp_vol = tp_vol.cumsum()
     cum_vol = df_today['Volume'].cumsum()
-    # Handle zero volume edge case
     cum_vol = cum_vol.replace(0, np.nan)
     return (cum_tp_vol / cum_vol).ffill()
 
@@ -94,7 +103,7 @@ def calculate_atr_wilder(df: pd.DataFrame, period: int = 14) -> pd.Series:
 # ==========================================
 # 4. CORE STRATEGY ENGINE & TRADE LIFECYCLE
 # ==========================================
-def process_stock_cycle(ticker: str, display_name: str):
+def process_stock_cycle(ticker: str, display_name: str, live_kotak_price: float = None):
     global active_trades, orb_notified_today, daily_trades_history
     
     # 1. Fetch 5 days of 5m data for convergence of 21 EMA & 14 ATR
@@ -116,6 +125,14 @@ def process_stock_cycle(ticker: str, display_name: str):
         df.index = df.index.tz_localize('UTC').tz_convert(IST)
     else:
         df.index = df.index.tz_convert(IST)
+
+    # If live Kotak Neo price is available, update the current bar close/high/low for real-time accuracy
+    if live_kotak_price and live_kotak_price > 0:
+        df.iloc[-1, df.columns.get_loc('Close')] = live_kotak_price
+        if live_kotak_price > df.iloc[-1]['High']:
+            df.iloc[-1, df.columns.get_loc('High')] = live_kotak_price
+        if live_kotak_price < df.iloc[-1]['Low']:
+            df.iloc[-1, df.columns.get_loc('Low')] = live_kotak_price
 
     # 2. Compute 9 EMA, 21 EMA, and 14 ATR over the continuous multi-day history
     df['EMA9'] = df['Close'].ewm(span=EMA_FAST, adjust=False).mean()
@@ -367,17 +384,19 @@ def square_off_all_positions():
 # 7. MAIN ENGINE LOOP
 # ==========================================
 def run_market_loop():
-    global orb_notified_today
+    global orb_notified_today, kotak_manager, kotak_active
     
+    feed_name = "Kotak Neo Direct Institutional API" if kotak_active else "Direct Market Feed"
     start_msg = (
         f"🚀 <b>Intraday Momentum Cloud Scanner Active</b>\n"
         f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
         f"💎 <b>Watchlist:</b> MCX, DIXON, BSE, CDSL\n"
         f"⚡ <b>Strategy:</b> 15m ORB + VWAP + 9/21 EMA + 1:2 ATR TP/SL\n"
+        f"🔌 <b>Data Feed:</b> {feed_name}\n"
         f"⏰ <b>Status:</b> Listening for market signals..."
     )
     send_telegram_alert(start_msg)
-    print("Intraday Scanner Active & Running...")
+    print(f"Intraday Scanner Active & Running ({feed_name})...")
 
     while True:
         now = datetime.datetime.now(IST)
@@ -411,10 +430,19 @@ def run_market_loop():
             print("Market session finished. Scanner exiting gracefully.")
             break
 
+        # Fetch Kotak live quotes if active
+        live_quotes = {}
+        if kotak_active and kotak_manager:
+            try:
+                live_quotes = kotak_manager.get_live_quotes()
+            except Exception as e:
+                print(f"[Kotak Neo API] Live quote refresh error: {e}")
+
         # Process each stock
         for ticker, name in STOCKS.items():
             try:
-                process_stock_cycle(ticker, name)
+                kotak_price = live_quotes.get(name)
+                process_stock_cycle(ticker, name, live_kotak_price=kotak_price)
             except Exception as e:
                 print(f"Error processing {name}: {e}")
 
