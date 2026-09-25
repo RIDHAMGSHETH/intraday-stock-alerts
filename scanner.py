@@ -283,14 +283,17 @@ def process_stock_cycle(ticker: str, display_name: str, live_kotak_price: float 
             
             trigger_type = "ORB Breakout" if long_breakout else "EMA/VWAP Pullback"
             msg = (
-                f"🟢 <b>BUY SIGNAL TRIGGERED: {display_name}</b>\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🟢 <b>[STOCK INTRADAY] BUY SIGNAL: {display_name}</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📈 <b>Action:</b> BUY (Intraday Cash)\n"
                 f"⚡ <b>Setup:</b> {trigger_type}\n"
-                f"💰 <b>Entry Price:</b> ₹{close_val:.2f}\n"
-                f"🎯 <b>Target (1:2 R:R):</b> ₹{tp:.2f} (+₹{tp-close_val:.2f})\n"
-                f"🛑 <b>Stop-Loss:</b> ₹{sl:.2f} (-₹{close_val-sl:.2f})\n"
-                f"📊 <b>ORB High:</b> ₹{orb_high:.2f} | <b>VWAP:</b> ₹{vwap_val:.2f}\n"
-                f"⏰ <b>Time:</b> {bar_time_str} IST"
+                f"💵 <b>Entry Price:</b> ₹{close_val:.2f}\n"
+                f"🎯 <b>Target (1:2 R:R):</b> ₹{tp:.2f} (+₹{tp-close_val:.2f} per share)\n"
+                f"🛑 <b>Stop-Loss:</b> ₹{sl:.2f} (-₹{close_val-sl:.2f} per share)\n"
+                f"📊 <b>Technical Anchor:</b> VWAP ₹{vwap_val:.2f} | ORB High ₹{orb_high:.2f}\n"
+                f"⏰ <b>Trigger Time:</b> {bar_time_str} IST\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"ℹ️ <i>Bot will automatically alert when Target or Stop-Loss is reached.</i>"
             )
             send_telegram_alert(msg)
 
@@ -302,14 +305,17 @@ def process_stock_cycle(ticker: str, display_name: str, live_kotak_price: float 
             
             trigger_type = "ORB Breakdown" if short_breakout else "EMA/VWAP Rejection"
             msg = (
-                f"🔴 <b>SELL SIGNAL TRIGGERED: {display_name}</b>\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔴 <b>[STOCK INTRADAY] SELL SIGNAL: {display_name}</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"📉 <b>Action:</b> SHORT SELL (Intraday Cash)\n"
                 f"⚡ <b>Setup:</b> {trigger_type}\n"
-                f"💰 <b>Entry Price:</b> ₹{close_val:.2f}\n"
-                f"🎯 <b>Target (1:2 R:R):</b> ₹{tp:.2f} (+₹{close_val-tp:.2f})\n"
-                f"🛑 <b>Stop-Loss:</b> ₹{sl:.2f} (-₹{sl-close_val:.2f})\n"
-                f"📊 <b>ORB Low:</b> ₹{orb_low:.2f} | <b>VWAP:</b> ₹{vwap_val:.2f}\n"
-                f"⏰ <b>Time:</b> {bar_time_str} IST"
+                f"💵 <b>Entry Price:</b> ₹{close_val:.2f}\n"
+                f"🎯 <b>Target (1:2 R:R):</b> ₹{tp:.2f} (+₹{close_val-tp:.2f} per share)\n"
+                f"🛑 <b>Stop-Loss:</b> ₹{sl:.2f} (-₹{sl-close_val:.2f} per share)\n"
+                f"📊 <b>Technical Anchor:</b> VWAP ₹{vwap_val:.2f} | ORB Low ₹{orb_low:.2f}\n"
+                f"⏰ <b>Trigger Time:</b> {bar_time_str} IST\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"ℹ️ <i>Bot will automatically alert when Target or Stop-Loss is reached.</i>"
             )
             send_telegram_alert(msg)
 
